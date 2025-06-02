@@ -13,12 +13,12 @@
             "state": {
               "type": "markdown",
               "state": {
-                "file": "软件/图形学/ImGui + stl_reader + OpenGL 加载模型.md",
+                "file": "软件/图形学/OpenGL.md",
                 "mode": "source",
                 "source": false
               },
               "icon": "lucide-file",
-              "title": "ImGui + stl_reader + OpenGL 加载模型"
+              "title": "OpenGL"
             }
           }
         ]
@@ -170,13 +170,35 @@
   },
   "active": "60f742b8eb3fc565",
   "lastOpenFiles": [
-    "软件/图形学/OpenGL.md",
+    "软件/图形学/code/build/CMakeFiles/Progress/2",
+    "软件/图形学/code/build/CMakeFiles/first_demo.dir/main.cpp-42e5fc22.o.tmp",
+    "软件/图形学/code/build/CMakeFiles/Progress/1",
+    "软件/图形学/code/build/CMakeFiles/Progress/4",
+    "软件/图形学/code/build/CMakeFiles/Progress/3",
+    "软件/图形学/code/build/CMakeFiles/Progress/count.txt",
+    "软件/图形学/code/build/CMakeFiles/Progress",
+    "软件/图形学/code/build/CMakeFiles/first_demo.dir/main.cpp-a862b89c.o.tmp",
+    "软件/图形学/code/build/CMakeFiles/first_demo.dir/main.cpp.o",
+    "软件/图形学/code/build/CMakeFiles/first_demo.dir/main.cpp-32bb4e89.o.tmp",
+    "软件/图形学/code/build/CMakeFiles/first_demo.dir/main.cpp-9282b10c.o.tmp",
     "软件/图形学/ImGui + stl_reader + OpenGL 加载模型.md",
-    "软件/C++",
-    "软件/Linux",
+    "软件/图形学/OpenGL.md",
+    "软件/图形学/code/3rdparty/glad-glad2/example/rust/gl-glfw-mx/README.md",
+    "软件/图形学/code/3rdparty/glad-glad2/example/rust/gl-glfw/README.md",
+    "软件/图形学/code/3rdparty/glad-glad2/test/README.md",
+    "软件/图形学/code/3rdparty/glad-glad2/long_description.md",
+    "软件/图形学/code/3rdparty/glad-glad2/README.md",
+    "软件/图形学/glad-glad2/example/rust/gl-glfw/README.md",
+    "软件/图形学/glad-glad2/example/rust/gl-glfw-mx/README.md",
+    "软件/图形学/glad-glad2/test/README.md",
+    "软件/图形学/glad-glad2/long_description.md",
+    "软件/图形学/glad-glad2/README.md",
+    "images/Pasted image 20250602120631.png",
+    "images/Pasted image 20250602121323.png",
+    "images/Pasted image 20250601145219.png",
+    "未命名.canvas",
+    "软件/图形学/理论知识.md",
     "软件/Linux/立创泰山派rk3566.md",
-    "README.md",
-    "软件/图形学",
-    "软件"
+    "README.md"
   ]
 }

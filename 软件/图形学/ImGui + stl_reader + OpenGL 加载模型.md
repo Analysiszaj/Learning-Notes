@@ -144,8 +144,9 @@ bool ModelImage::LoadFromSTL(const char* filePath, int texWidth, int texHeight)
   
 
 	// 2. 上传到OpenGL
-	glGenVertexArrays(1, &VAO);
 	// 生成一个VAO（顶点数组对象），并把它的ID保存在`VAO`变量里。
+	glGenVertexArrays(1, &VAO);
+	// 顶点对象
 	glGenBuffers(1, &VBO);
 	// 生成一个NBO（法线缓冲对象），用来存放所有顶点的法线数据
 	glGenBuffers(1, &NBO);
@@ -170,8 +171,6 @@ bool ModelImage::LoadFromSTL(const char* filePath, int texWidth, int texHeight)
 	glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 3 * sizeof(float), (void*)0);
 	glEnableVertexAttribArray(0);
 
-  
-
 	// 法线（下面的同上）
 	glBindBuffer(GL_ARRAY_BUFFER, NBO);
 	glBufferData(GL_ARRAY_BUFFER, normals.size() * sizeof(float), normals.data(), GL_STATIC_DRAW);
@@ -187,152 +186,93 @@ bool ModelImage::LoadFromSTL(const char* filePath, int texWidth, int texHeight)
 
   
 
-// 3. 创建FBO+纹理
+	// 3. 创建FBO+纹理
+	glGenFramebuffers(1, &FBO);
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+	glGenTextures(1, &ID);
+	glBindTexture(GL_TEXTURE_2D, ID);
 
-glGenFramebuffers(1, &FBO);
-
-glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-
-glGenTextures(1, &ID);
-
-glBindTexture(GL_TEXTURE_2D, ID);
-
-glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
-
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-
-glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-
-glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ID, 0);
+	glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, Width, Height, 0, GL_RGBA, GL_UNSIGNED_BYTE, NULL);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+	glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+	glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, GL_TEXTURE_2D, ID, 0);
 
   
 
-GLuint rbo;
+	GLuint rbo;
+	glGenRenderbuffers(1, &rbo);
+	glBindRenderbuffer(GL_RENDERBUFFER, rbo);
+	glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, Width, Height);
+	glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
 
-glGenRenderbuffers(1, &rbo);
+	if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
+	{
+		glBindFramebuffer(GL_FRAMEBUFFER, 0);
+		glDeleteTextures(1, &ID);
+		glDeleteFramebuffers(1, &FBO);
+		return false;
+	}
 
-glBindRenderbuffer(GL_RENDERBUFFER, rbo);
-
-glRenderbufferStorage(GL_RENDERBUFFER, GL_DEPTH24_STENCIL8, Width, Height);
-
-glFramebufferRenderbuffer(GL_FRAMEBUFFER, GL_DEPTH_STENCIL_ATTACHMENT, GL_RENDERBUFFER, rbo);
-
-  
-
-if (glCheckFramebufferStatus(GL_FRAMEBUFFER) != GL_FRAMEBUFFER_COMPLETE)
-
-{
-
-glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-glDeleteTextures(1, &ID);
-
-glDeleteFramebuffers(1, &FBO);
-
-return false;
-
-
-// 4. 编译着色器
-
-shader = createShaderProgram();
+	// 4. 编译着色器
+	shader = createShaderProgram();
 
   
 
-// 5. 渲染到FBO纹理
-
-glBindFramebuffer(GL_FRAMEBUFFER, FBO);
-
-glViewport(0, 0, Width, Height);
-
-glEnable(GL_DEPTH_TEST);
-
-glClearColor(0.2f, 0.2f, 0.22f, 1.0f);
-
-glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+	// 5. 渲染到FBO纹理
+	glBindFramebuffer(GL_FRAMEBUFFER, FBO);
+	glViewport(0, 0, Width, Height);
+	glEnable(GL_DEPTH_TEST);
+	glClearColor(0.2f, 0.2f, 0.22f, 1.0f);
+	glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
   
 
-// 计算包围盒，自动居中缩放
+	// 计算包围盒，自动居中缩放
+	glm::vec3 minP(FLT_MAX), maxP(-FLT_MAX);
+	for (size_t i = 0; i + 2 < coords.size(); i += 3)
+	{
+		glm::vec3 p(coords[i], coords[i + 1], coords[i + 2]);
+		minP = glm::min(minP, p);
+		maxP = glm::max(maxP, p);
+	}
+	glm::vec3 center = (minP + maxP) * 0.5f;
+	glm::vec3 size = maxP - minP;
+	float scale = 2.0f / std::max(std::max(size.x, size.y), size.z);
 
-glm::vec3 minP(FLT_MAX), maxP(-FLT_MAX);
+	center_ = center;
+	scale_ = scale;
 
-for (size_t i = 0; i + 2 < coords.size(); i += 3)
-
-{
-
-glm::vec3 p(coords[i], coords[i + 1], coords[i + 2]);
-
-minP = glm::min(minP, p);
-
-maxP = glm::max(maxP, p);
-
-}
-
-glm::vec3 center = (minP + maxP) * 0.5f;
-
-glm::vec3 size = maxP - minP;
-
-float scale = 2.0f / std::max(std::max(size.x, size.y), size.z);
+	glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(scale));
+	model = glm::translate(model, -center);
 
   
 
-center_ = center;
-
-scale_ = scale;
-
-  
-
-glm::mat4 model = glm::scale(glm::mat4(1.0f), glm::vec3(scale));
-
-model = glm::translate(model, -center);
+	glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
+	glm::mat4 proj = glm::perspective(glm::radians(45.0f), Width / float(Height), 0.1f, 100.0f);
+	glm::mat4 mvp = proj * view * model;
 
   
 
-glm::mat4 view = glm::lookAt(glm::vec3(0, 0, 3), glm::vec3(0, 0, 0), glm::vec3(0, 1, 0));
-
-glm::mat4 proj = glm::perspective(glm::radians(45.0f), Width / float(Height), 0.1f, 100.0f);
-
-glm::mat4 mvp = proj * view * model;
-
-  
-
-glUseProgram(shader);
-
-GLint mvpLoc = glGetUniformLocation(shader, "mvp");
-
-glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvp));
-
-GLint modelLoc = glGetUniformLocation(shader, "model");
-
-glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
+	glUseProgram(shader);
+	GLint mvpLoc = glGetUniformLocation(shader, "mvp");
+	glUniformMatrix4fv(mvpLoc, 1, GL_FALSE, glm::value_ptr(mvp));
+	GLint modelLoc = glGetUniformLocation(shader, "model")
+	glUniformMatrix4fv(modelLoc, 1, GL_FALSE, glm::value_ptr(model));
 
   
 
-glBindVertexArray(VAO);
+	glBindVertexArray(VAO);
+	glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+	// glDrawArrays(GL_TRIANGLES, 0, coords.size()/3);
+	glBindVertexArray(0);
+	glBindFramebuffer(GL_FRAMEBUFFER, 0);
 
-glDrawElements(GL_TRIANGLES, indexCount, GL_UNSIGNED_INT, 0);
+		// 删除RBO
+	glDeleteRenderbuffers(1, &rbo);
 
-// glDrawArrays(GL_TRIANGLES, 0, coords.size()/3);
-
-glBindVertexArray(0);
-
-  
-
-glBindFramebuffer(GL_FRAMEBUFFER, 0);
-
-  
-
-// 删除RBO
-
-glDeleteRenderbuffers(1, &rbo);
-
-  
-
-return true;
+	return true;
 
 }
 ```
